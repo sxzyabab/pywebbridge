@@ -1,6 +1,7 @@
-from ..样式 import classList,style
-from typing import Optional as 可选
-from ..数据 import JavaScript对象
+from typing import Optional as 可选,Protocol as 协议,runtime_checkable as 可检查
+from uuid import UUID
+from ..js import JavaScript对象
+from .._内部存储 import 获取内部数据
 
 元素基本属性={
     'namespaceURI',
@@ -111,14 +112,99 @@ from ..数据 import JavaScript对象
     'ariaValueText',
 }
 
-class 元素(JavaScript对象):
+@可检查
+class DOM描述(协议):
+    ...
+    def json()->dict:
+        ...
+
+class 元素(DOM描述):
     '所有元素的基类'
     元素标识:可选[str]=None
     自闭合:bool=None
-    def __init__(自身):
-        '固定存在的子对象'
-        自身.classList=classList()
-        自身.style=style()
+    def __init__(自身,属性:dict,*子节点:list,样式:dict=None):
+        if 自身.元素标识 is None:
+            raise TypeError('请勿使用内部父类')
+        属性=属性 or {}
+        for k,v in 属性.items():
+            #键
+            if not isinstance(k,str):
+                raise TypeError(f'属性名必须是字符串: {k}')
+            if not k:
+                raise ValueError('属性名不能为空')
+            if any(c in k for c in ' "\'\t\n\r\f\v=<>/\\@?+#\x00'):
+                raise ValueError('属性名不能包含非法字符')
+            if k[0] in '0123456789-.':
+                raise ValueError('属性名不能以数字、点或减号开头')
+            #值
+            if v is None:
+                continue
+            if not isinstance(v,str|int|float|bool):
+                raise TypeError(f'属性值必须是字符串、整数、浮点数或布尔值: {v}')
+            if v in (float('inf'),float('-inf'),float('nan')):
+                raise ValueError('不得使用无效特殊浮点值')
+        自身.属性=属性
+        自身.样式=样式 or {}
+        自身.子节点=子节点
+
+    def json(自身)->dict:
+        '编成元素描述。子节点是描述、已有对象或字符串'
+        子元素=[]
+        for 子 in 自身.子节点:
+            if isinstance(子,元素):
+                子元素.append(子.json())
+            elif isinstance(子,str):
+                子元素.append(子)
+            elif isinstance(子,JavaScript对象):
+                子元素.append({
+                    '类型':'jsobj',
+                    'uuid':UUID(获取内部数据(子,'uuid')).hex,
+                })
+            else:
+                raise TypeError(f'子节点必须是元素、字符串或页面对象: {子}')
+        属性={}
+        for 名,值 in 自身.属性.items():
+            if 值 is None:
+                continue
+            属性[名]=值
+        return {'类型':自身.元素标识,'属性':属性,'子元素':子元素}
+
+    def __format__(自身, format_spec: str, /) -> str:
+        '序列化为 HTML 片段。format_spec 是本层缩进，子元素递归时多一个制表符'
+        片段=[format_spec,'<',自身.元素标识]
+        属性片段=[]
+        for 名,值 in 自身.属性.items():
+            if 值 is None or 值 is False:
+                continue
+            if 值 is True:
+                属性片段.append(名)
+                continue
+            文本=(str(值).replace('&','&amp;')
+                .replace('"','&quot;')
+                .replace('\u00a0','&nbsp;'))
+            属性片段.append(名+'="'+文本+'"')
+        if 属性片段:
+            片段.append(' '+' '.join(属性片段))#标签名和属性之间留空格
+        if 自身.自闭合:
+            片段.append('>')
+            return ''.join(片段)
+        if not 自身.子节点:
+            片段.append('></'+自身.元素标识+'>')
+            return ''.join(片段)
+        片段.append('>\n')
+        子缩进=format_spec+'\t'
+        for 子 in 自身.子节点:
+            if isinstance(子,元素):
+                片段.append(子.__format__(子缩进)+'\n')
+            elif isinstance(子,str):
+                片段.append(子缩进+子.replace('&','&amp;')
+                    .replace('<','&lt;')
+                    .replace('>','&gt;')
+                    .replace('\u00a0','&nbsp;')+'\n')
+            else:
+                raise TypeError(f'子节点必须是元素或字符串: {子}')
+        片段.append(format_spec+'</'+自身.元素标识+'>')
+        return ''.join(片段)
 
     def getAttribute(自身,qualifiedName: str)->str|None:
         '读取属性，没有是 None'
@@ -364,15 +450,15 @@ element=元素
 
 class documentElement(元素):
     'HTML文档'
-    元素标识='<html>'
+    元素标识='html'
 
 class head(元素):
     'HTML头'
-    元素标识='<head>'
+    元素标识='head'
 
 class body(元素):
     'HTML正文'
-    元素标识='<body>'
+    元素标识='body'
 
 class 可校验元素(元素):
     '带约束校验的元素共有的'
@@ -629,23 +715,23 @@ class 表格区(元素):
 
 class address(元素):
     '联系地址'
-    元素标识='<address>'
+    元素标识='address'
 
 class article(元素):
     '独立成篇的内容'
-    元素标识='<article>'
+    元素标识='article'
 
 class aside(元素):
     '旁边的附属内容'
-    元素标识='<aside>'
+    元素标识='aside'
 
 class audio(媒体元素):
     '音频'
-    元素标识='<audio>'
+    元素标识='audio'
 
 class base(元素):
     '页面链接的基准地址'
-    元素标识='<base>'
+    元素标识='base'
     自闭合=True
     @property
     def href(自身)->str:
@@ -662,7 +748,7 @@ class base(元素):
 
 class canvas(元素):
     '画布'
-    元素标识='<canvas>'
+    元素标识='canvas'
     @property
     def width(自身)->int:
         ...
@@ -697,11 +783,11 @@ class canvas(元素):
 
 class caption(元素):
     '表格标题'
-    元素标识='<caption>'
+    元素标识='caption'
 
 class col(元素):
     '表格的一列'
-    元素标识='<col>'
+    元素标识='col'
     自闭合=True
     @property
     def span(自身)->int:
@@ -712,7 +798,7 @@ class col(元素):
 
 class colgroup(元素):
     '表格的一组列'
-    元素标识='<colgroup>'
+    元素标识='colgroup'
     @property
     def span(自身)->int:
         ...
@@ -722,7 +808,7 @@ class colgroup(元素):
 
 class data(元素):
     '带机器可读值的内容'
-    元素标识='<data>'
+    元素标识='data'
     @property
     def value(自身)->str:
         ...
@@ -732,23 +818,23 @@ class data(元素):
 
 class dd(元素):
     '描述列表中的说明'
-    元素标识='<dd>'
+    元素标识='dd'
 
 class div(元素):
     '通用容器'
-    元素标识='<div>'
+    元素标识='div'
 
 class dl(元素):
     '描述列表'
-    元素标识='<dl>'
+    元素标识='dl'
 
 class dt(元素):
     '描述列表中的术语'
-    元素标识='<dt>'
+    元素标识='dt'
 
 class embed(元素):
     '嵌入的外部内容'
-    元素标识='<embed>'
+    元素标识='embed'
     自闭合=True
     @property
     def src(自身)->str:
@@ -780,27 +866,27 @@ class embed(元素):
 
 class figcaption(元素):
     '图的说明'
-    元素标识='<figcaption>'
+    元素标识='figcaption'
 
 class figure(元素):
     '独立的图'
-    元素标识='<figure>'
+    元素标识='figure'
 
 class footer(元素):
     '页脚'
-    元素标识='<footer>'
+    元素标识='footer'
 
 class header(元素):
     '页眉'
-    元素标识='<header>'
+    元素标识='header'
 
 class hgroup(元素):
     '标题组'
-    元素标识='<hgroup>'
+    元素标识='hgroup'
 
 class iframe(元素):
     '嵌入的页面'
-    元素标识='<iframe>'
+    元素标识='iframe'
     @property
     def src(自身)->str:
         ...
@@ -870,7 +956,7 @@ class iframe(元素):
 
 class img(元素):
     '图片'
-    元素标识='<img>'
+    元素标识='img'
     自闭合=True
     @property
     def alt(自身)->str:
@@ -968,7 +1054,7 @@ class img(元素):
 
 class li(元素):
     '列表项'
-    元素标识='<li>'
+    元素标识='li'
     @property
     def value(自身)->int:
         ...
@@ -978,7 +1064,7 @@ class li(元素):
 
 class link(元素):
     '关联的外部资源'
-    元素标识='<link>'
+    元素标识='link'
     自闭合=True
     @property
     def href(自身)->str:
@@ -1071,16 +1157,13 @@ class link(元素):
     def sheet(自身)->object:
         ...
 
-setattr(link,'as',link.as_)
-delattr(link,'as_')
-
 class main(元素):
     '页面的主要内容'
-    元素标识='<main>'
+    元素标识='main'
 
 class map(元素):
     '图片热区'
-    元素标识='<map>'
+    元素标识='map'
     @property
     def name(自身)->str:
         ...
@@ -1093,11 +1176,11 @@ class map(元素):
 
 class menu(元素):
     '菜单'
-    元素标识='<menu>'
+    元素标识='menu'
 
 class meta(元素):
     '页面元数据'
-    元素标识='<meta>'
+    元素标识='meta'
     自闭合=True
     @property
     def name(自身)->str:
@@ -1126,15 +1209,15 @@ class meta(元素):
 
 class nav(元素):
     '导航'
-    元素标识='<nav>'
+    元素标识='nav'
 
 class noscript(元素):
     '脚本不可用时显示的内容'
-    元素标识='<noscript>'
+    元素标识='noscript'
 
 class objectElement(可校验元素):
     '嵌入的外部对象'
-    元素标识='<object>'
+    元素标识='object'
     @property
     def data(自身)->str:
         ...
@@ -1180,7 +1263,7 @@ class objectElement(可校验元素):
 
 class ol(元素):
     '有序列表'
-    元素标识='<ol>'
+    元素标识='ol'
     @property
     def reversed(自身)->bool:
         ...
@@ -1202,11 +1285,11 @@ class ol(元素):
 
 class picture(元素):
     '按条件选用的图片'
-    元素标识='<picture>'
+    元素标识='picture'
 
 class script(元素):
     '脚本'
-    元素标识='<script>'
+    元素标识='script'
     @property
     def src(自身)->str:
         ...
@@ -1276,15 +1359,15 @@ delattr(script,'异步')
 
 class search(元素):
     '搜索区域'
-    元素标识='<search>'
+    元素标识='search'
 
 class section(元素):
     '章节'
-    元素标识='<section>'
+    元素标识='section'
 
 class slot(元素):
     '插槽'
-    元素标识='<slot>'
+    元素标识='slot'
     @property
     def name(自身)->str:
         ...
@@ -1301,7 +1384,7 @@ class slot(元素):
 
 class source(元素):
     '图片或媒体的来源'
-    元素标识='<source>'
+    元素标识='source'
     自闭合=True
     @property
     def src(自身)->str:
@@ -1348,7 +1431,7 @@ class source(元素):
 
 class styleElement(元素):
     '样式'
-    元素标识='<style>'
+    元素标识='style'
     @property
     def disabled(自身)->bool:
         ...
@@ -1370,7 +1453,7 @@ class styleElement(元素):
 
 class table(元素):
     '表格'
-    元素标识='<table>'
+    元素标识='table'
     @property
     def caption(自身)->object:
         ...
@@ -1433,15 +1516,15 @@ class table(元素):
 
 class tbody(表格区):
     '表体'
-    元素标识='<tbody>'
+    元素标识='tbody'
 
 class td(单元格):
     '单元格'
-    元素标识='<td>'
+    元素标识='td'
 
 class template(元素):
     '模板'
-    元素标识='<template>'
+    元素标识='template'
     @property
     def content(自身)->object:
         ...
@@ -1472,19 +1555,19 @@ class template(元素):
 
 class tfoot(表格区):
     '表尾'
-    元素标识='<tfoot>'
+    元素标识='tfoot'
 
 class th(单元格):
     '表头单元格'
-    元素标识='<th>'
+    元素标识='th'
 
 class thead(表格区):
     '表头'
-    元素标识='<thead>'
+    元素标识='thead'
 
 class time(元素):
     '日期或时间'
-    元素标识='<time>'
+    元素标识='time'
     @property
     def dateTime(自身)->str:
         ...
@@ -1494,7 +1577,7 @@ class time(元素):
 
 class title(元素):
     '文档标题'
-    元素标识='<title>'
+    元素标识='title'
     @property
     def text(自身)->str:
         ...
@@ -1504,7 +1587,7 @@ class title(元素):
 
 class tr(元素):
     '表格的一行'
-    元素标识='<tr>'
+    元素标识='tr'
     @property
     def rowIndex(自身)->int:
         ...
@@ -1524,7 +1607,7 @@ class tr(元素):
 
 class track(元素):
     '媒体的文字轨道'
-    元素标识='<track>'
+    元素标识='track'
     自闭合=True
     NONE: int=0
     LOADING: int=1
@@ -1569,11 +1652,11 @@ class track(元素):
 
 class ul(元素):
     '无序列表'
-    元素标识='<ul>'
+    元素标识='ul'
 
 class video(媒体元素):
     '视频'
-    元素标识='<video>'
+    元素标识='video'
     @property
     def width(自身)->int:
         ...

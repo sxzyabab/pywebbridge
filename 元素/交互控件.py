@@ -102,7 +102,7 @@ class 超链接元素(元素):
 
 class a(超链接元素):
     '网页上的链接'
-    元素标识='<a>'
+    元素标识='a'
     @property
     def hreflang(自身)->str:
         ...
@@ -124,7 +124,7 @@ class a(超链接元素):
 
 class area(超链接元素):
     '图片上的可点区域'
-    元素标识='<area>'
+    元素标识='area'
     自闭合=True
     @property
     def alt(自身)->str:
@@ -147,7 +147,7 @@ class area(超链接元素):
 
 class button(可校验元素):
     '按钮'
-    元素标识='<button>'
+    元素标识='button'
     @property
     def disabled(自身)->bool:
         ...
@@ -235,14 +235,14 @@ class button(可校验元素):
 
 class datalist(元素):
     '输入框的建议选项'
-    元素标识='<datalist>'
+    元素标识='datalist'
     @property
     def options(自身)->object:
         ...
 
 class details(元素):
     '可展开的详情'
-    元素标识='<details>'
+    元素标识='details'
     @property
     def open(自身)->bool:
         ...
@@ -258,7 +258,7 @@ class details(元素):
 
 class dialog(元素):
     '对话框'
-    元素标识='<dialog>'
+    元素标识='dialog'
     @property
     def open(自身)->bool:
         ...
@@ -289,7 +289,7 @@ class dialog(元素):
 
 class fieldset(可校验元素):
     '一组表单控件'
-    元素标识='<fieldset>'
+    元素标识='fieldset'
     @property
     def disabled(自身)->bool:
         ...
@@ -314,7 +314,7 @@ class fieldset(可校验元素):
 
 class form(元素):
     '表单'
-    元素标识='<form>'
+    元素标识='form'
     @property
     def acceptCharset(自身)->str:
         ...
@@ -403,7 +403,7 @@ class form(元素):
 
 class input(可校验元素):
     '输入控件'
-    元素标识='<input>'
+    元素标识='input'
     自闭合=True
     @property
     def accept(自身)->str:
@@ -677,7 +677,7 @@ class input(可校验元素):
 
 class label(元素):
     '控件的标签'
-    元素标识='<label>'
+    元素标识='label'
     @property
     def form(自身)->object:
         ...
@@ -693,14 +693,14 @@ class label(元素):
 
 class legend(元素):
     '表单分组的标题'
-    元素标识='<legend>'
+    元素标识='legend'
     @property
     def form(自身)->object:
         ...
 
 class meter(元素):
     '某个范围内的度量'
-    元素标识='<meter>'
+    元素标识='meter'
     @property
     def value(自身)->float:
         ...
@@ -743,7 +743,7 @@ class meter(元素):
 
 class optgroup(元素):
     '一组选项'
-    元素标识='<optgroup>'
+    元素标识='optgroup'
     @property
     def disabled(自身)->bool:
         ...
@@ -759,7 +759,7 @@ class optgroup(元素):
 
 class option(元素):
     '选项'
-    元素标识='<option>'
+    元素标识='option'
     @property
     def disabled(自身)->bool:
         ...
@@ -805,7 +805,7 @@ class option(元素):
 
 class output(可校验元素):
     '计算出来的结果'
-    元素标识='<output>'
+    元素标识='output'
     @property
     def htmlFor(自身)->object:
         ...
@@ -839,7 +839,7 @@ class output(可校验元素):
 
 class progress(元素):
     '进度'
-    元素标识='<progress>'
+    元素标识='progress'
     @property
     def value(自身)->float:
         ...
@@ -861,7 +861,7 @@ class progress(元素):
 
 class select(可校验元素):
     '下拉选择'
-    元素标识='<select>'
+    元素标识='select'
     @property
     def autocomplete(自身)->str:
         ...
@@ -953,15 +953,15 @@ class select(可校验元素):
 
 class selectedcontent(元素):
     '选择框里显示的选中项'
-    元素标识='<selectedcontent>'
+    元素标识='selectedcontent'
 
 class summary(元素):
     '详情的标题'
-    元素标识='<summary>'
+    元素标识='summary'
 
 class textarea(可校验元素):
     '多行输入框'
-    元素标识='<textarea>'
+    元素标识='textarea'
     @property
     def autocomplete(自身)->str:
         ...

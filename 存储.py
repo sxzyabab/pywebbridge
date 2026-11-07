@@ -1,4 +1,4 @@
-from .数据 import JavaScript对象
+from .js import JavaScript对象
 
 class 网页存储(JavaScript对象):
     存储类型:str='Storage'

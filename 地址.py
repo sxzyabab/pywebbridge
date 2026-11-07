@@ -1,4 +1,4 @@
-from .数据 import JavaScript对象
+from .js import JavaScript对象
 
 
 class location(JavaScript对象):

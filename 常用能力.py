@@ -1,21 +1,8 @@
-from .数据 import JavaScript对象
+from .js import JavaScript对象
 from .存储 import localStorage,sessionStorage
 from .样式 import styleSheets
 from .地址 import history,location
 from .浏览器功能 import console
-
-class 标签页:
-    '所有对象的根,消息总出入口'
-    def __init__(self):
-        from .常用能力 import window
-        self.window=object.__new__(window)
-        self.桥:object
-
-    def 发送消息(self,操作:str,目标:UUID,参数:dict):
-        ...
-
-class window(JavaScript对象):
-    ...
 
 class Window(JavaScript对象):
     '当前窗口'

@@ -4,6 +4,14 @@ class 桥接服务异常(Exception):
 class 连接断开(桥接服务异常):
     ...
 
+class 非法报文(桥接服务异常):
+    def __init__(自身,消息,报文):
+        自身.消息=消息
+        自身.报文=报文
+
+    def __str__(自身):
+        return 自身.消息
+
 class js错误(Exception):
     js错误标识='Error'
 

@@ -1,4 +1,4 @@
-from .数据 import JavaScript对象
+from .js import JavaScript对象
 
 class console(JavaScript对象):
     def assert_(自身,condition: bool,message: str|None=None)->None:

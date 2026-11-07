@@ -12,13 +12,4 @@ from . import (
     异常,
 )
 
-from .数据 import (
-    JavaScript对象,
-    无数据,
-    undefined,
-    正无穷,
-    负无穷,
-    负0,
-    非数字,
-    NaN,
-)
+from .js import *
